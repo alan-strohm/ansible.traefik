@@ -35,7 +35,7 @@
 - name: 'setup : dynamic file config'
   become: true
   copy:
-    dest: '{{ traefik_dir }}/traefik_dynamic_file_config.yml'
+    dest: '{{ traefik_dir }}/dynamic_conf/traefik_dynamic_file_config.yml'
     owner: root
     group: docker
     mode: 0550
@@ -55,6 +55,27 @@
   notify:
     - restart traefik container
   when: traefik_qs_tls_options
+
+- name: 'setup : create directory for secrets'
+  become: true
+  file:
+    path: '{{ item }}'
+    state: directory
+    owner: root
+    group: docker
+    mode: 0550
+  with_items:
+    - '{{ traefik_dir }}/secrets'
+
+- name: 'setup: write secrets'
+  become: true
+  copy:
+    dest: '{{ traefik_dir }}/secrets/{{ item.key|lower }}'
+    owner: root
+    group: docker
+    mode: 0550
+    content: '{{ item.value }}'
+  with_items: '{{ traefik_env_secrets | dict2items }}'
 
 - name: 'setup: middelware'
   become: true
@@ -84,6 +105,7 @@
     published_ports: '{{ traefik_ports }}'
     volumes: '{{ traefik_volumes + traefik_add_volumes }}'
     labels: '{{ traefik_labels }}'
+    env: "{{ dict(traefik_env_secrets.keys() | zip(traefik_int_secrets_files)) }}"
     command:
       - '--configFile=/etc/traefik/traefik.yml'
     networks:

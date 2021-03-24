@@ -103,10 +103,13 @@ traefik_conf_log: "{{
 #   )
 # }}"
 
+traefik_int_secrets_files: '{{ traefik_env_secrets.keys() | list | map("regex_replace", "^(.*)$", "/secrets/\1") | lower }}'
+
 traefik_volumes:
     - /etc/localtime:/etc/localtime:ro
     - "/var/run/docker.sock:/var/run/docker.sock:ro"
     - "{{ traefik_dir }}/dynamic_conf/:/etc/traefik/dynamic_conf/:ro"
     - "{{ traefik_dir }}/traefik.yml:/etc/traefik/traefik.yml"
     - "{{ traefik_dir }}/letsencrypt/:/letsencrypt/:rw"
+    - "{{ traefik_dir }}/secrets/:/secrets/:ro"
     - traefik-data:/etc/traefik
